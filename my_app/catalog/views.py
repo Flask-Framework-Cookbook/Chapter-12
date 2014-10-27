@@ -2,10 +2,11 @@ import json
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
-from my_app import db, app, es, cache
+from my_app import db, app, es, cache, mail
 from my_app.catalog.models import Product, Category, product_created, \
     category_created
 from sqlalchemy.orm.util import join
+from flask_mail import Message
 
 catalog = Blueprint('catalog', __name__)
 
@@ -124,6 +125,19 @@ def create_category():
     db.session.commit()
     category_created.send(app, category=category)
     #category.add_index_to_es()
+    message = Message(
+        "New category added",
+        recipients=['some-receiver@domain.com']
+    )
+    message.body = render_template(
+        "category-create-email-text.html",
+        category=category
+    )
+    message.html = render_template(
+        "category-create-email-html.html",
+        category=category
+    )
+    mail.send(message)
     return render_template('category.html', category=category)
 
 

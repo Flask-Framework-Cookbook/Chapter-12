@@ -2,7 +2,7 @@ import json
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
-from my_app import db, app, es
+from my_app import db, app, es, cache
 from my_app.catalog.models import Product, Category, product_created, \
     category_created
 from sqlalchemy.orm.util import join
@@ -42,6 +42,7 @@ def home():
 
 
 @catalog.route('/product/<id>')
+@cache.memoize(120)
 def product(id):
     product = Product.query.get_or_404(id)
     return render_template('product.html', product=product)
@@ -133,6 +134,7 @@ def category(id):
 
 
 @catalog.route('/categories')
+@cache.cached(timeout=120)
 def categories():
     categories = Category.query.all()
     return render_template('categories.html', categories=categories)

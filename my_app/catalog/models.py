@@ -1,6 +1,13 @@
 import flask.ext.whooshalchemy as whooshalchemy
+from blinker import Namespace
 from my_app import es
 from my_app import db, app
+
+
+catalog_signals = Namespace()
+product_created = catalog_signals.signal('product-created')
+category_created = catalog_signals.signal('category-created')
+
 
 class Product(db.Model):
     __searchable__ = ['name', 'company']
@@ -23,15 +30,16 @@ class Product(db.Model):
     def __repr__(self):
         return '<Product %d>' % self.id
 
-    def add_index_to_es(self):
-        es.index('catalog', 'product', {
-            'name': self.name,
-            'category': self.category.name
-        })
-        es.refresh('catalog')
 
+def add_product_index_to_es(sender, product):
+    es.index('catalog', 'product', {
+        'name': product.name,
+        'category': product.category.name
+    })
+    es.refresh('catalog')
 
-whooshalchemy.whoosh_index(app, Product)
+product_created.connect(add_product_index_to_es, app)
+
 
 class Category(db.Model):
     __searchable__ = ['name']
@@ -45,11 +53,13 @@ class Category(db.Model):
     def __repr__(self):
         return '<Category %d>' % self.id
 
-    def add_index_to_es(self):
-        es.index('catalog', 'category', {
-            'name': self.name,
-        })
-        es.refresh('catalog')
-
-
 whooshalchemy.whoosh_index(app, Category)
+
+
+def add_category_index_to_es(sender, category):
+    es.index('catalog', 'category', {
+        'name': category.name,
+    })
+    es.refresh('catalog')
+
+category_created.connect(add_category_index_to_es, app)

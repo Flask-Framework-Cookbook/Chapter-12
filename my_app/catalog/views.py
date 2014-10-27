@@ -1,9 +1,8 @@
 import json
-import thread
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
-from my_app import db, app, es, cache, mail
+from my_app import db, app, es, cache, mail, celery
 from my_app.catalog.models import Product, Category, product_created, \
     category_created
 from sqlalchemy.orm.util import join
@@ -30,6 +29,7 @@ def template_or_json(template=None):
     return decorated
 
 
+@celery.task()
 def send_mail(message):
     with app.app_context():
         mail.send(message)
@@ -144,7 +144,7 @@ def create_category():
         category=category
     )
     #mail.send(message)
-    thread.start_new_thread(send_mail, (message,))
+    send_mail.apply_async((message,))
     return render_template('category.html', category=category)
 
 

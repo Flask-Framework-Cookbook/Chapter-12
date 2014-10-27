@@ -1,4 +1,5 @@
 import json
+import thread
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
@@ -27,6 +28,11 @@ def template_or_json(template=None):
                 return render_template(template, **ctx)
         return decorated_fn
     return decorated
+
+
+def send_mail(message):
+    with app.app_context():
+        mail.send(message)
 
 
 @app.errorhandler(404)
@@ -143,7 +149,8 @@ def create_category():
         "category-create-email-html.html",
         category=category
     )
-    mail.send(message)
+    #mail.send(message)
+    thread.start_new_thread(send_mail, (message,))
     return render_template('category.html', category=category)
 
 

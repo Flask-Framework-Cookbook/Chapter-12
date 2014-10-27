@@ -1,7 +1,8 @@
+import json
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
-from my_app import db, app
+from my_app import db, app, es
 from my_app.catalog.models import Product, Category
 from sqlalchemy.orm.util import join
 
@@ -65,6 +66,7 @@ def create_product():
         product = Product(name, price, category, company)
         db.session.add(product)
         db.session.commit()
+        product.add_index_to_es()
         flash('The product %s has been created' % name, 'success')
         return redirect(url_for('catalog.product', id=product.id))
     return render_template('product-create.html')
@@ -101,6 +103,14 @@ def product_search_whoosh(page=1):
     return render_template(
         'products.html', products=products.paginate(page, 10)
     )
+
+
+@catalog.route('/product-search-es')
+@catalog.route('/product-search-es/<int:page>')
+def product_search_es(page=1):
+    q = request.args.get('q')
+    products = es.search(q)
+    return json.dumps(products)
 
 
 @catalog.route('/category-create', methods=['POST',])

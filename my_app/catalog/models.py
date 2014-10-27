@@ -1,4 +1,5 @@
 import flask.ext.whooshalchemy as whooshalchemy
+from my_app import es
 from my_app import db, app
 
 class Product(db.Model):
@@ -22,6 +23,13 @@ class Product(db.Model):
     def __repr__(self):
         return '<Product %d>' % self.id
 
+    def add_index_to_es(self):
+        es.index('catalog', 'product', {
+            'name': self.name,
+            'category': self.category.name
+        })
+        es.refresh('catalog')
+
 
 whooshalchemy.whoosh_index(app, Product)
 
@@ -36,6 +44,12 @@ class Category(db.Model):
 
     def __repr__(self):
         return '<Category %d>' % self.id
+
+    def add_index_to_es(self):
+        es.index('catalog', 'category', {
+            'name': self.name,
+        })
+        es.refresh('catalog')
 
 
 whooshalchemy.whoosh_index(app, Category)

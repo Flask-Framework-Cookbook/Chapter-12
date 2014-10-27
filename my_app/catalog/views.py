@@ -57,11 +57,12 @@ def create_product():
     if request.method == 'POST':
         name = request.form.get('name')
         price = request.form.get('price')
+        company = request.form.get('company')
         categ_name = request.form.get('category')
         category = Category.query.filter_by(name=categ_name).first()
         if not category:
             category = Category(categ_name)
-        product = Product(name, price, category)
+        product = Product(name, price, category, company)
         db.session.add(product)
         db.session.commit()
         flash('The product %s has been created' % name, 'success')
@@ -87,6 +88,16 @@ def product_search(page=1):
         products = products.select_from(join(Product, Category)).filter(
             Category.name.like('%' + category + '%')
         )
+    return render_template(
+        'products.html', products=products.paginate(page, 10)
+    )
+
+
+@catalog.route('/product-search-whoosh')
+@catalog.route('/product-search-whoosh/<int:page>')
+def product_search_whoosh(page=1):
+    q = request.args.get('q')
+    products = Product.query.whoosh_search(q)
     return render_template(
         'products.html', products=products.paginate(page, 10)
     )

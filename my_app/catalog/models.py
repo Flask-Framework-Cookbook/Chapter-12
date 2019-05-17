@@ -1,4 +1,4 @@
-import flask.ext.whooshalchemy as whooshalchemy
+import flask_whooshalchemy
 from my_app import db, app
 
 class Product(db.Model):
@@ -23,8 +23,6 @@ class Product(db.Model):
         return '<Product %d>' % self.id
 
 
-whooshalchemy.whoosh_index(app, Product)
-
 class Category(db.Model):
     __searchable__ = ['name']
 
@@ -36,6 +34,3 @@ class Category(db.Model):
 
     def __repr__(self):
         return '<Category %d>' % self.id
-
-
-whooshalchemy.whoosh_index(app, Category)

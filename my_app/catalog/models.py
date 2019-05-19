@@ -32,7 +32,7 @@ class Product(db.Model):
 
 
 def add_product_index_to_es(sender, product):
-    es.index(index='catalog', doc_type='product', body={
+    es.index(index='catalog', body={
         'name': product.name,
         'category': product.category.name
     }, id=product.id)
@@ -55,9 +55,9 @@ class Category(db.Model):
 
 
 def add_category_index_to_es(sender, category):
-    es.index(index='catalog', doc_type='category', body={
+    es.index(index='catalog', body={
         'name': category.name,
-    }, id=product.id)
+    }, id=category.id)
     es.indices.refresh('catalog')
 
 category_created.connect(add_category_index_to_es, app)

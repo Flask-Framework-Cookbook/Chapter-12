@@ -1,5 +1,5 @@
 import json
-import thread
+from threading import Thread
 from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
@@ -150,7 +150,8 @@ def create_category():
         category=category
     )
     #mail.send(message)
-    thread.start_new_thread(send_mail, (message,))
+    t = Thread(target=send_mail, args=(message,))
+    t.start()
     return render_template('category.html', category=category)
 
 

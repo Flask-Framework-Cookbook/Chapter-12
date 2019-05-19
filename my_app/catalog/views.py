@@ -3,7 +3,8 @@ from functools import wraps
 from flask import request, Blueprint, render_template, jsonify, flash, \
     redirect, url_for
 from my_app import db, app, es
-from my_app.catalog.models import Product, Category
+from my_app.catalog.models import Product, Category, product_created, \
+    category_created
 from sqlalchemy.orm.util import join
 
 catalog = Blueprint('catalog', __name__)
@@ -66,7 +67,8 @@ def create_product():
         product = Product(name, price, category, company)
         db.session.add(product)
         db.session.commit()
-        product.add_index_to_es()
+        product_created.send(app, product=product)
+        #product.add_index_to_es()
         flash('The product %s has been created' % name, 'success')
         return redirect(url_for('catalog.product', id=product.id))
     return render_template('product-create.html')
@@ -125,6 +127,8 @@ def create_category():
     category = Category(name)
     db.session.add(category)
     db.session.commit()
+    category_created.send(app, category=category)
+    #category.add_index_to_es()
     return render_template('category.html', category=category)
 
 
